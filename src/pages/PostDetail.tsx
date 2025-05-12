@@ -27,7 +27,13 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 
-type SortOption = 'oldest' | 'newest';
+type SortOption = 'mostReplies' | 'oldest' | 'newest';
+
+// Utility to count all descendants recursively
+const countReplies = (comment: HNComment): number => {
+  if (!comment.children || comment.children.length === 0) return 0;
+  return comment.children.reduce((acc, child) => acc + 1 + countReplies(child), 0);
+};
 
 interface LocationState {
   post: HNPost;
@@ -45,7 +51,7 @@ export const PostDetail: React.FC = () => {
   const [post, setPost] = useState<HNPost | null>(null);
   const [comments, setComments] = useState<HNComment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [sortBy, setSortBy] = useState<SortOption>('oldest');
+  const [sortBy, setSortBy] = useState<SortOption>('mostReplies');
   const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null);
 
   const state = location.state as LocationState | null;
@@ -105,7 +111,7 @@ export const PostDetail: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (!id) return;
-      
+
       // Check if we have data from navigation state
       const state = location.state as LocationState | null;
       if (state?.post && state?.comments) {
@@ -114,7 +120,7 @@ export const PostDetail: React.FC = () => {
         setLoading(false);
         return;
       }
-      
+
       setLoading(true);
       try {
         const [postData, commentsData] = await Promise.all([
@@ -135,16 +141,20 @@ export const PostDetail: React.FC = () => {
 
   const sortComments = (comments: HNComment[]): HNComment[] => {
     return [...comments].sort((a, b) => {
+      if (sortBy === 'mostReplies') {
+        // Sort by reply count descending
+        const repliesA = countReplies(a);
+        const repliesB = countReplies(b);
+        if (repliesA !== repliesB) return repliesB - repliesA;
+      }
       const dateA = new Date(a.created_at).getTime();
       const dateB = new Date(b.created_at).getTime();
-      
-      // For oldest first (default), use ascending order
-      // For newest first, use descending order
-      const comparison = sortBy === 'oldest' 
-        ? dateA - dateB 
-        : dateB - dateA;
 
-      // Use objectID as a tiebreaker if available
+      // For oldest first, use ascending order
+      // For newest first, use descending order
+      const comparison = sortBy === 'oldest'
+        ? dateA - dateB
+        : dateB - dateA;
       if (comparison !== 0) return comparison;
       if (a.objectID && b.objectID) {
         return a.objectID.localeCompare(b.objectID);
@@ -170,23 +180,23 @@ export const PostDetail: React.FC = () => {
   }
 
   return (
-    <Container 
-      maxWidth="md" 
-      sx={{ 
-        py: isMobile ? 2 : 4, 
+    <Container
+      maxWidth="md"
+      sx={{
+        py: isMobile ? 2 : 4,
         px: isMobile ? 1 : 2,
         position: 'relative',
-      }} 
+      }}
       {...(isMobile ? swipeHandlers : {})}
     >
       <Button
         startIcon={<ArrowBackIcon />}
-        onClick={() => navigate('/', { 
-          state: { 
+        onClick={() => navigate('/', {
+          state: {
             allPosts: (location.state as LocationState)?.allPosts || [],
             allComments: (location.state as LocationState)?.allComments || {},
             preserveState: true
-          } 
+          }
         })}
         sx={{ mb: 2 }}
         size={isMobile ? "small" : "medium"}
@@ -250,51 +260,51 @@ export const PostDetail: React.FC = () => {
       <Slide direction={slideDirection || 'left'} in={true} mountOnEnter unmountOnExit>
         <Box key={`post-content-${post.objectID}`}>
           <Paper key={`post-paper-${post.objectID}`} sx={{ p: isMobile ? 2 : 3, mb: 4 }}>
-            <Typography 
+            <Typography
               key={`post-title-${post.objectID}`}
-              variant={isMobile ? "h5" : "h4"} 
+              variant={isMobile ? "h5" : "h4"}
               gutterBottom
-              sx={{ 
+              sx={{
                 fontSize: isMobile ? '1.5rem' : '2rem',
                 lineHeight: 1.3
               }}
             >
               {post.title}
             </Typography>
-            
-            <Box key={`post-meta-${post.objectID}`} sx={{ 
-              display: 'flex', 
-              gap: 0.5, 
-              mb: 2, 
+
+            <Box key={`post-meta-${post.objectID}`} sx={{
+              display: 'flex',
+              gap: 0.5,
+              mb: 2,
               flexWrap: 'wrap',
               '& .MuiChip-root': {
                 height: isMobile ? 24 : 32,
                 fontSize: isMobile ? '0.75rem' : '0.875rem'
               }
             }}>
-              <Chip 
-                label={`${post.points} points`} 
-                color="primary" 
+              <Chip
+                label={`${post.points} points`}
+                color="primary"
                 variant="outlined"
               />
-              <Chip 
-                label={`${post.num_comments} comments`} 
-                color="secondary" 
+              <Chip
+                label={`${post.num_comments} comments`}
+                color="secondary"
                 variant="outlined"
               />
-              <Chip 
-                label={formatDistanceToNow(new Date(post.created_at), { addSuffix: true })} 
+              <Chip
+                label={formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
                 variant="outlined"
               />
             </Box>
 
             {post.url && (
-              <Link 
-                href={post.url} 
-                target="_blank" 
+              <Link
+                href={post.url}
+                target="_blank"
                 rel="noopener noreferrer"
-                sx={{ 
-                  display: 'block', 
+                sx={{
+                  display: 'block',
                   mb: 2,
                   wordBreak: 'break-all',
                   fontSize: isMobile ? '0.875rem' : '1rem'
@@ -304,8 +314,8 @@ export const PostDetail: React.FC = () => {
               </Link>
             )}
 
-            <Typography 
-              variant="body2" 
+            <Typography
+              variant="body2"
               color="text.secondary"
               sx={{ fontSize: isMobile ? '0.875rem' : '1rem' }}
             >
@@ -321,6 +331,7 @@ export const PostDetail: React.FC = () => {
                 label="Sort Comments"
                 onChange={(e) => setSortBy(e.target.value as SortOption)}
               >
+                <MenuItem value="mostReplies">Most Replies</MenuItem>
                 <MenuItem value="oldest">Oldest First</MenuItem>
                 <MenuItem value="newest">Newest First</MenuItem>
               </Select>
@@ -329,9 +340,9 @@ export const PostDetail: React.FC = () => {
 
           <Box>
             {sortComments(comments).map((comment, index) => (
-              <CommentTree 
-                key={`${post.objectID}-comment-${comment.objectID || index}`} 
-                comment={comment} 
+              <CommentTree
+                key={`${post.objectID}-comment-${comment.objectID || index}`}
+                comment={comment}
               />
             ))}
           </Box>
@@ -339,4 +350,4 @@ export const PostDetail: React.FC = () => {
       </Slide>
     </Container>
   );
-}; 
+};

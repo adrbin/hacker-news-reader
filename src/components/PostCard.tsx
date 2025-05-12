@@ -4,6 +4,7 @@ import { formatDistanceToNow } from 'date-fns';
 import type { HNPost, HNComment } from '../services/hnApi';
 import { useNavigate } from 'react-router-dom';
 import { SafeHtml } from './SafeHtml';
+import { countReplies } from '../services/hnApi';
 
 interface PostCardProps {
   post: HNPost;
@@ -19,8 +20,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post, comments, allPosts, al
 
   const handleClick = () => {
     navigate(`/post/${post.objectID}`, {
-      state: { 
-        post, 
+      state: {
+        post,
         comments,
         allPosts,
         allComments,
@@ -34,14 +35,15 @@ export const PostCard: React.FC<PostCardProps> = ({ post, comments, allPosts, al
     return text.slice(0, maxLength) + '...';
   };
 
+  // Find the top comment by most replies (not by points)
   const topComment = comments.length > 0
-    ? [...comments].sort((a, b) => b.points - a.points)[0]
+    ? [...comments].sort((a, b) => countReplies(b) - countReplies(a))[0]
     : null;
 
   return (
-    <Card 
-      sx={{ 
-        mb: 2, 
+    <Card
+      sx={{
+        mb: 2,
         cursor: 'pointer',
         '&:hover': {
           boxShadow: 6,
@@ -50,48 +52,48 @@ export const PostCard: React.FC<PostCardProps> = ({ post, comments, allPosts, al
       onClick={handleClick}
     >
       <CardContent sx={{ p: isMobile ? 1.5 : 2 }}>
-        <Typography 
-          variant={isMobile ? "subtitle1" : "h6"} 
-          component="div" 
+        <Typography
+          variant={isMobile ? "subtitle1" : "h6"}
+          component="div"
           gutterBottom
-          sx={{ 
+          sx={{
             fontSize: isMobile ? '1.1rem' : '1.25rem',
             lineHeight: 1.3
           }}
         >
           {post.title}
         </Typography>
-        <Box sx={{ 
-          display: 'flex', 
-          gap: 0.5, 
-          mb: 1, 
+        <Box sx={{
+          display: 'flex',
+          gap: 0.5,
+          mb: 1,
           flexWrap: 'wrap',
           '& .MuiChip-root': {
             height: isMobile ? 24 : 32,
             fontSize: isMobile ? '0.75rem' : '0.875rem'
           }
         }}>
-          <Chip 
-            size="small" 
-            label={`${post.points} points`} 
-            color="primary" 
+          <Chip
+            size="small"
+            label={`${post.points} points`}
+            color="primary"
             variant="outlined"
           />
-          <Chip 
-            size="small" 
-            label={`${post.num_comments} comments`} 
-            color="secondary" 
+          <Chip
+            size="small"
+            label={`${post.num_comments} comments`}
+            color="secondary"
             variant="outlined"
           />
-          <Chip 
-            size="small" 
-            label={formatDistanceToNow(new Date(post.created_at), { addSuffix: true })} 
+          <Chip
+            size="small"
+            label={formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
             variant="outlined"
           />
         </Box>
-        <Typography 
-          variant="body2" 
-          color="text.secondary" 
+        <Typography
+          variant="body2"
+          color="text.secondary"
           gutterBottom
           sx={{ fontSize: isMobile ? '0.875rem' : '1rem' }}
         >
@@ -101,16 +103,16 @@ export const PostCard: React.FC<PostCardProps> = ({ post, comments, allPosts, al
           <>
             <Divider sx={{ my: 1 }} />
             <Box>
-              <Typography 
-                variant="body2" 
-                color="text.secondary" 
+              <Typography
+                variant="body2"
+                color="text.secondary"
                 gutterBottom
                 sx={{ fontSize: isMobile ? '0.875rem' : '1rem' }}
               >
                 Top comment by {topComment.author}:
               </Typography>
-              <Typography 
-                variant="body2" 
+              <Typography
+                variant="body2"
                 color="text.secondary"
                 component="div"
                 sx={{
@@ -131,4 +133,4 @@ export const PostCard: React.FC<PostCardProps> = ({ post, comments, allPosts, al
       </CardContent>
     </Card>
   );
-}; 
+};

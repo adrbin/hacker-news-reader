@@ -55,10 +55,16 @@ export const getComments = async (id: string): Promise<HNComment[]> => {
   return response.data.children || [];
 };
 
+// Utility to count all descendants recursively
+export const countReplies = (comment: HNComment): number => {
+  if (!comment.children || comment.children.length === 0) return 0;
+  return comment.children.reduce((acc, child) => acc + 1 + countReplies(child), 0);
+};
+
 const getTimeFilter = (timeRange: string): string => {
   const now = Math.floor(Date.now() / 1000);
   const day = 24 * 60 * 60;
-  
+
   switch (timeRange) {
     case 'day':
       return `created_at_i>${now - day}`;
@@ -71,4 +77,4 @@ const getTimeFilter = (timeRange: string): string => {
     default:
       return '';
   }
-}; 
+};
