@@ -18,10 +18,10 @@ import { debounce } from '@mui/material/utils';
 
 const timeRanges = [
   { value: 'day', label: 'Past 24 Hours' },
-  { value: 'all', label: 'All Time' },
   { value: 'week', label: 'Past Week' },
   { value: 'month', label: 'Past Month' },
   { value: 'year', label: 'Past Year' },
+  { value: 'all', label: 'All Time' },
 ];
 
 export const HomePage: React.FC = () => {
