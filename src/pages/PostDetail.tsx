@@ -125,7 +125,7 @@ export const PostDetail: React.FC = () => {
         navigateToPost('prev');
       }
     },
-    trackMouse: isMobile, // Only track mouse on mobile
+    trackMouse: true, // Enable mouse swiping on all devices
     preventScrollOnSwipe: true,
   });
 
@@ -177,7 +177,7 @@ export const PostDetail: React.FC = () => {
         px: isMobile ? 1 : 2,
         position: 'relative',
       }}
-      {...(isMobile ? swipeHandlers : {})}
+      {...swipeHandlers} // Always attach swipe handlers
     >
       <Button
         startIcon={<ArrowBackIcon />}
