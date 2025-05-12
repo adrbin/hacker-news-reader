@@ -5,8 +5,8 @@ import Typography from '@mui/material/Typography';
 
 const Header: React.FC = () => (
     <AppBar position="static" color="primary" elevation={2}>
-        <Toolbar>
-            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+        <Toolbar sx={{ display: 'flex', justifyContent: 'center' }}>
+            <Typography variant="h6" component="div">
                 Hacker News Reader
             </Typography>
         </Toolbar>
