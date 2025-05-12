@@ -3,6 +3,7 @@ import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import { HomePage } from './pages/HomePage';
 import { PostDetail } from './pages/PostDetail';
 import Header from './components/Header';
+import { PostsProvider } from './context/PostsContext';
 
 const theme = createTheme({
   palette: {
@@ -46,16 +47,18 @@ const theme = createTheme({
 
 function App() {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Header />
+    <PostsProvider>
       <Router>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/post/:id" element={<PostDetail />} />
-        </Routes>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <Header />
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/post/:id" element={<PostDetail />} />
+          </Routes>
+        </ThemeProvider>
       </Router>
-    </ThemeProvider>
+    </PostsProvider>
   );
 }
 

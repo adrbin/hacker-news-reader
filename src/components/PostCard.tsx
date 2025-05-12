@@ -1,32 +1,26 @@
 import React from 'react';
 import { Card, CardContent, Typography, Box, Chip, Divider, useTheme, useMediaQuery } from '@mui/material';
 import { formatDistanceToNow } from 'date-fns';
-import type { HNPost, HNComment } from '../services/hnApi';
+import type { HNPost } from '../services/hnApi';
 import { useNavigate } from 'react-router-dom';
 import { SafeHtml } from './SafeHtml';
 import { countReplies } from '../services/hnApi';
+import { usePostsContext } from '../hooks/usePostsContext';
 
 interface PostCardProps {
   post: HNPost;
-  comments: HNComment[];
-  allPosts: HNPost[];
-  allComments: Record<string, HNComment[]>;
 }
 
-export const PostCard: React.FC<PostCardProps> = ({ post, comments, allPosts, allComments }) => {
+export const PostCard: React.FC<PostCardProps> = ({ post }) => {
+  const { comments, setShouldPreserveState } = usePostsContext();
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const handleClick = () => {
+    setShouldPreserveState(true);
     navigate(`/post/${post.objectID}`, {
-      state: {
-        post,
-        comments,
-        allPosts,
-        allComments,
-        preserveState: true
-      }
+      state: { post }
     });
   };
 
@@ -35,9 +29,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post, comments, allPosts, al
     return text.slice(0, maxLength) + '...';
   };
 
-  // Find the top comment by most replies (not by points)
-  const topComment = comments.length > 0
-    ? [...comments].sort((a, b) => countReplies(b) - countReplies(a))[0]
+  const topComment = comments[post.objectID]?.length > 0
+    ? [...comments[post.objectID]].sort((a, b) => countReplies(b) - countReplies(a))[0]
     : null;
 
   return (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useSwipeable } from 'react-swipeable';
 import {
@@ -20,12 +20,13 @@ import {
   IconButton,
 } from '@mui/material';
 import { formatDistanceToNow } from 'date-fns';
-import { getPost, getComments } from '../services/hnApi';
+import { getPost } from '../services/hnApi';
 import { CommentTree } from '../components/CommentTree';
 import type { HNPost, HNComment } from '../services/hnApi';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import { usePostsContext } from '../hooks/usePostsContext';
 
 type SortOption = 'mostReplies' | 'oldest' | 'newest';
 
@@ -35,13 +36,6 @@ const countReplies = (comment: HNComment): number => {
   return comment.children.reduce((acc, child) => acc + 1 + countReplies(child), 0);
 };
 
-interface LocationState {
-  post: HNPost;
-  comments: HNComment[];
-  allPosts: HNPost[];
-  allComments: Record<string, HNComment[]>;
-}
-
 export const PostDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
@@ -49,47 +43,74 @@ export const PostDetail: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [post, setPost] = useState<HNPost | null>(null);
-  const [comments, setComments] = useState<HNComment[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<SortOption>('mostReplies');
   const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null);
 
-  const state = location.state as LocationState | null;
-  const allPosts = state?.allPosts || [];
+  const {
+    posts,
+    comments,
+    setShouldPreserveState
+  } = usePostsContext();
 
-  const currentPostIndex = allPosts.findIndex(p => p.objectID === id);
-  const hasNextPost = currentPostIndex < allPosts.length - 1;
+  const currentPostIndex = useMemo(() =>
+    posts.findIndex((p: HNPost) => p.objectID === id),
+    [posts, id]
+  );
+
+  const hasNextPost = currentPostIndex < posts.length - 1;
   const hasPrevPost = currentPostIndex > 0;
+  const currentComments = comments[id || ''] || [];
 
-  const navigateToPost = (direction: 'next' | 'prev') => {
+  const navigateToPost = useCallback((direction: 'next' | 'prev') => {
     if (direction === 'next' && hasNextPost) {
-      const nextPost = allPosts[currentPostIndex + 1];
+      const nextPost = posts[currentPostIndex + 1];
       setSlideDirection('left');
-      setTimeout(() => {
-        navigate(`/post/${nextPost.objectID}`, {
-          state: {
-            post: nextPost,
-            comments: state?.allComments?.[nextPost.objectID] || [],
-            allPosts,
-            allComments: state?.allComments || {},
-          },
-        });
-      }, 300);
+      navigate(`/post/${nextPost.objectID}`, {
+        state: { post: nextPost }
+      });
     } else if (direction === 'prev' && hasPrevPost) {
-      const prevPost = allPosts[currentPostIndex - 1];
+      const prevPost = posts[currentPostIndex - 1];
       setSlideDirection('right');
-      setTimeout(() => {
-        navigate(`/post/${prevPost.objectID}`, {
-          state: {
-            post: prevPost,
-            comments: state?.allComments?.[prevPost.objectID] || [],
-            allPosts,
-            allComments: state?.allComments || {},
-          },
-        });
-      }, 300);
+      navigate(`/post/${prevPost.objectID}`, {
+        state: { post: prevPost }
+      });
     }
-  };
+  }, [hasNextPost, hasPrevPost, posts, currentPostIndex, navigate]);
+
+  const handleNavigateHome = useCallback(() => {
+    setShouldPreserveState(true);
+    navigate('/');
+  }, [navigate, setShouldPreserveState]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!id) return;
+
+      // Check if we have data from navigation state
+      const state = location.state as { post: HNPost } | null;
+      if (state?.post) {
+        setPost(state.post);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const postData = await getPost(id);
+        setPost(postData);
+      } catch (error) {
+        console.error('Error fetching post details:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+    return () => {
+      setSlideDirection(null);
+    };
+  }, [id, location.state]);
 
   const swipeHandlers = useSwipeable({
     onSwipedLeft: (e) => {
@@ -107,37 +128,6 @@ export const PostDetail: React.FC = () => {
     trackMouse: isMobile, // Only track mouse on mobile
     preventScrollOnSwipe: true,
   });
-
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!id) return;
-
-      // Check if we have data from navigation state
-      const state = location.state as LocationState | null;
-      if (state?.post && state?.comments) {
-        setPost(state.post);
-        setComments(state.comments);
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      try {
-        const [postData, commentsData] = await Promise.all([
-          getPost(id),
-          getComments(id),
-        ]);
-        setPost(postData);
-        setComments(commentsData);
-      } catch (error) {
-        console.error('Error fetching post details:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [id, location.state]);
 
   const sortComments = (comments: HNComment[]): HNComment[] => {
     return [...comments].sort((a, b) => {
@@ -191,13 +181,7 @@ export const PostDetail: React.FC = () => {
     >
       <Button
         startIcon={<ArrowBackIcon />}
-        onClick={() => navigate('/', {
-          state: {
-            allPosts: (location.state as LocationState)?.allPosts || [],
-            allComments: (location.state as LocationState)?.allComments || {},
-            preserveState: true
-          }
-        })}
+        onClick={handleNavigateHome}
         sx={{ mb: 2 }}
         size={isMobile ? "small" : "medium"}
       >
@@ -339,7 +323,7 @@ export const PostDetail: React.FC = () => {
           </Box>
 
           <Box>
-            {sortComments(comments).map((comment, index) => (
+            {sortComments(currentComments).map((comment, index) => (
               <CommentTree
                 key={`${post.objectID}-comment-${comment.objectID || index}`}
                 comment={comment}
