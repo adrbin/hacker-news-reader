@@ -28,15 +28,16 @@ export const HomePage: React.FC = () => {
   const {
     posts,
     shouldPreserveState,
-    setShouldPreserveState,
     fetchPosts,
-    isLoading
+    isLoading,
+    searchQuery,
+    setSearchQuery,
+    timeRange,
+    setTimeRange
   } = usePostsContext();
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const [searchQuery, setSearchQuery] = useState('');
-  const [timeRange, setTimeRange] = useState('day');
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
 
@@ -78,7 +79,6 @@ export const HomePage: React.FC = () => {
 
   // Initial load: only fetch if not preserving state and posts are empty
   useEffect(() => {
-    setShouldPreserveState(false);
     if (!shouldPreserveState && posts.length === 0) {
       performFetch(true);
     }

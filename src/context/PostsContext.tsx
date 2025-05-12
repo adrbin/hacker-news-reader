@@ -9,6 +9,8 @@ export const PostsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const [comments, setComments] = useState<Record<string, HNComment[]>>({});
     const [shouldPreserveState, setShouldPreserveState] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [timeRange, setTimeRange] = useState('day');
 
     const fetchPosts = useCallback(async (query: string, timeRange: string, page: number, reset: boolean = false) => {
         if (isLoading) return;
@@ -55,7 +57,11 @@ export const PostsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                 shouldPreserveState,
                 setShouldPreserveState,
                 fetchPosts,
-                isLoading
+                isLoading,
+                searchQuery,
+                setSearchQuery,
+                timeRange,
+                setTimeRange
             }}
         >
             {children}
