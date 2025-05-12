@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { 
-  Container, 
-  TextField, 
-  Select, 
-  MenuItem, 
-  FormControl, 
+import {
+  Container,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
   InputLabel,
   Box,
   CircularProgress,
@@ -42,15 +42,18 @@ export const HomePage: React.FC = () => {
   const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const didRestoreRef = useRef(false); // Track if state has been restored
 
-  // Handle state from navigation
+  // Handle state from navigation (restore only once)
   useEffect(() => {
+    if (didRestoreRef.current) return;
     const state = location.state as LocationState | null;
     if (state?.preserveState && state?.allPosts && state?.allComments) {
       setPosts(state.allPosts);
       setComments(state.allComments);
       setPage(Math.floor(state.allPosts.length / 20)); // Assuming 20 posts per page
       setHasMore(state.allPosts.length % 20 === 0); // If we have a full page, there might be more
+      didRestoreRef.current = true;
     }
   }, [location.state]);
 
@@ -72,20 +75,20 @@ export const HomePage: React.FC = () => {
 
   const fetchPosts = useCallback(async (reset: boolean = false) => {
     if (loading) return;
-    
+
     setLoading(true);
     try {
       const currentPage = reset ? 0 : page;
       const response = await searchPosts(searchQuery, timeRange, currentPage);
-      
+
       const newPosts = reset ? response.hits : [...posts, ...response.hits];
       setPosts(newPosts);
       setHasMore(currentPage < response.nbPages - 1);
-      
+
       // Fetch comments for new posts
       const newPostIds = response.hits.map(post => post.objectID);
       await fetchComments(newPostIds);
-      
+
       if (!reset) {
         setPage(currentPage + 1);
       }
@@ -96,19 +99,28 @@ export const HomePage: React.FC = () => {
     }
   }, [searchQuery, timeRange, page, loading, posts, fetchComments]);
 
-  // Initial data loading
+  // Initial data loading and refetch on search/sort change
   useEffect(() => {
     const state = location.state as LocationState | null;
-    if (state?.preserveState && state?.allPosts && state?.allComments) {
-      setPosts(state.allPosts);
-      setComments(state.allComments);
-      setPage(Math.floor(state.allPosts.length / 20));
-      setHasMore(state.allPosts.length % 20 === 0);
-    } else {
-      setPage(0);
-      fetchPosts(true);
+    if (!didRestoreRef.current) {
+      if (state?.preserveState && state?.allPosts && state?.allComments) {
+        setPosts(state.allPosts);
+        setComments(state.allComments);
+        setPage(Math.floor(state.allPosts.length / 20));
+        setHasMore(state.allPosts.length % 20 === 0);
+        didRestoreRef.current = true;
+        return;
+      } else {
+        didRestoreRef.current = true;
+        setPage(0);
+        fetchPosts(true);
+        return;
+      }
     }
-  }, [searchQuery, timeRange]);
+    // If already restored, refetch on search/sort change
+    setPage(0);
+    fetchPosts(true);
+  }, [searchQuery, timeRange, fetchPosts, location.state]);
 
   const handleScroll = useCallback(() => {
     if (
@@ -128,9 +140,9 @@ export const HomePage: React.FC = () => {
 
   return (
     <Container maxWidth="md" sx={{ py: isMobile ? 2 : 4, px: isMobile ? 1 : 2 }}>
-      <Stack 
-        direction={isMobile ? "column" : "row"} 
-        spacing={2} 
+      <Stack
+        direction={isMobile ? "column" : "row"}
+        spacing={2}
         sx={{ mb: 4 }}
       >
         <TextField
@@ -158,9 +170,9 @@ export const HomePage: React.FC = () => {
       </Stack>
 
       {posts.map((post) => (
-        <PostCard 
-          key={post.objectID} 
-          post={post} 
+        <PostCard
+          key={post.objectID}
+          post={post}
           comments={comments[post.objectID] || []}
           allPosts={posts}
           allComments={comments}
@@ -174,4 +186,4 @@ export const HomePage: React.FC = () => {
       )}
     </Container>
   );
-}; 
+};
