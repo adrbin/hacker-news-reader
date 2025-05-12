@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
-import { 
-  Box, 
-  Typography, 
-  IconButton, 
+import {
+  Box,
+  Typography,
+  IconButton,
   Collapse,
   Paper,
   Chip,
   useTheme,
   useMediaQuery
 } from '@mui/material';
-import { 
+import {
   KeyboardArrowDown as ExpandMoreIcon,
   KeyboardArrowUp as ExpandLessIcon
 } from '@mui/icons-material';
@@ -23,7 +23,7 @@ interface CommentTreeProps {
 }
 
 export const CommentTree: React.FC<CommentTreeProps> = ({ comment, level = 0 }) => {
-  const [expanded, setExpanded] = useState(level === 0);
+  const [expanded, setExpanded] = useState(true); // Always expanded by default
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -32,10 +32,10 @@ export const CommentTree: React.FC<CommentTreeProps> = ({ comment, level = 0 }) 
   };
 
   return (
-    <Paper 
-      elevation={1} 
-      sx={{ 
-        mb: 1, 
+    <Paper
+      elevation={1}
+      sx={{
+        mb: 1,
         ml: isMobile ? level : level * 2,
         p: isMobile ? 1 : 1.5,
         backgroundColor: level === 0 ? 'background.paper' : 'background.default'
@@ -43,9 +43,9 @@ export const CommentTree: React.FC<CommentTreeProps> = ({ comment, level = 0 }) 
     >
       <Box key={`comment-header-${comment.objectID}`} sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
         {comment.children && comment.children.length > 0 && (
-          <IconButton 
+          <IconButton
             key={`expand-button-${comment.objectID}`}
-            size={isMobile ? "small" : "medium"} 
+            size={isMobile ? "small" : "medium"}
             onClick={toggleExpand}
             sx={{ p: isMobile ? 0.5 : 1 }}
           >
@@ -53,48 +53,52 @@ export const CommentTree: React.FC<CommentTreeProps> = ({ comment, level = 0 }) 
           </IconButton>
         )}
         <Box key={`comment-content-${comment.objectID}`} sx={{ flex: 1 }}>
-          <Box key={`comment-meta-${comment.objectID}`} sx={{ 
-            display: 'flex', 
-            gap: 0.5, 
-            mb: 1, 
+          <Box key={`comment-meta-${comment.objectID}`} sx={{
+            display: 'flex',
+            gap: 0.5,
+            mb: 1,
             flexWrap: 'wrap',
             '& .MuiChip-root': {
               height: isMobile ? 20 : 24,
               fontSize: isMobile ? '0.7rem' : '0.75rem'
             }
           }}>
-            <Typography 
+            <Typography
               key={`author-${comment.objectID}`}
-              variant="subtitle2" 
+              variant="subtitle2"
               component="span"
-              sx={{ 
+              sx={{
                 fontSize: isMobile ? '0.875rem' : '1rem',
                 fontWeight: 600
               }}
             >
               {comment.author}
             </Typography>
-            <Chip 
+            <Chip
               key={`time-${comment.objectID}`}
-              size="small" 
-              label={formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })} 
+              size="small"
+              label={formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
               variant="outlined"
             />
             {comment.points > 0 && (
-              <Chip 
+              <Chip
                 key={`points-${comment.objectID}`}
-                size="small" 
-                label={`${comment.points} points`} 
-                color="primary" 
+                size="small"
+                label={`${comment.points} points`}
+                color="primary"
                 variant="outlined"
               />
             )}
           </Box>
-          <Typography 
+        </Box>
+      </Box>
+      <Collapse key={`collapse-${comment.objectID}`} in={expanded}>
+        <Box>
+          <Typography
             key={`comment-text-${comment.objectID}`}
-            variant="body2" 
-            component="div" 
-            sx={{ 
+            variant="body2"
+            component="div"
+            sx={{
               whiteSpace: 'pre-wrap',
               wordBreak: 'break-word',
               fontSize: isMobile ? '0.875rem' : '1rem',
@@ -103,19 +107,17 @@ export const CommentTree: React.FC<CommentTreeProps> = ({ comment, level = 0 }) 
           >
             <SafeHtml html={comment.text} />
           </Typography>
-        </Box>
-      </Box>
-      <Collapse key={`collapse-${comment.objectID}`} in={expanded}>
-        <Box key={`children-${comment.objectID}`} sx={{ mt: 1 }}>
-          {comment.children?.map((child, index) => (
-            <CommentTree 
-              key={`${comment.objectID}-child-${child.objectID || index}`} 
-              comment={child} 
-              level={level + 1} 
-            />
-          ))}
+          <Box key={`children-${comment.objectID}`} sx={{ mt: 1 }}>
+            {comment.children?.map((child, index) => (
+              <CommentTree
+                key={`${comment.objectID}-child-${child.objectID || index}`}
+                comment={child}
+                level={level + 1}
+              />
+            ))}
+          </Box>
         </Box>
       </Collapse>
     </Paper>
   );
-}; 
+};
