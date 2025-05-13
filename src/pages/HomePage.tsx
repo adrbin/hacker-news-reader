@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
 import {
   Container,
   TextField,
@@ -34,7 +34,8 @@ export const HomePage: React.FC = () => {
     searchQuery,
     setSearchQuery,
     timeRange,
-    setTimeRange
+    setTimeRange,
+    setShouldPreserveState
   } = usePostsContext();
 
   const theme = useTheme();
@@ -115,6 +116,27 @@ export const HomePage: React.FC = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
+
+  // Ref to ensure scroll restoration only happens once
+  const didRestoreScroll = useRef(false);
+
+  useLayoutEffect(() => {
+    if (posts.length > 0 && shouldPreserveState && !didRestoreScroll.current) {
+      const savedScroll = sessionStorage.getItem('hnScrollY');
+      if (savedScroll) {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            window.scrollTo(0, parseInt(savedScroll, 10));
+            // Only reset shouldPreserveState after scroll restoration
+            setShouldPreserveState(false);
+          });
+        });
+      } else {
+        setShouldPreserveState(false);
+      }
+      didRestoreScroll.current = true;
+    }
+  }, [posts, shouldPreserveState, setShouldPreserveState]);
 
   return (
     <Container maxWidth="md" sx={{ py: isMobile ? 2 : 4, px: isMobile ? 1 : 2 }}>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useLayoutEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useSwipeable } from 'react-swipeable';
 import {
@@ -111,6 +111,10 @@ export const PostDetail: React.FC = () => {
       setSlideDirection(null);
     };
   }, [id, location.state]);
+
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
 
   const swipeHandlers = useSwipeable({
     onSwipedLeft: (e) => {

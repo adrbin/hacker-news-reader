@@ -18,6 +18,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const handleClick = () => {
+    sessionStorage.setItem('hnScrollY', String(window.scrollY)); // Save scroll position before navigating
     setShouldPreserveState(true);
     navigate(`/post/${post.objectID}`, {
       state: { post }
