@@ -103,7 +103,7 @@ export const HomePage: React.FC = () => {
   const handleScroll = useCallback(() => {
     if (
       window.innerHeight + document.documentElement.scrollTop
-      === document.documentElement.offsetHeight
+      >= document.documentElement.offsetHeight - 100 // Use threshold for reliability
     ) {
       if (hasMore && !isLoading) {
         performFetch();
