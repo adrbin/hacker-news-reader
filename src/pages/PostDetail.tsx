@@ -120,17 +120,20 @@ export const PostDetail: React.FC = () => {
     onSwipedLeft: (e) => {
       // Only trigger if swipe started from the right edge
       if (e.initial[0] > window.innerWidth * 0.8) {
+        if (e.event?.cancelable) e.event.preventDefault(); // Prevent horizontal scroll
         navigateToPost('next');
       }
     },
     onSwipedRight: (e) => {
       // Only trigger if swipe started from the left edge
       if (e.initial[0] < window.innerWidth * 0.2) {
+        if (e.event?.cancelable) e.event.preventDefault(); // Prevent horizontal scroll
         navigateToPost('prev');
       }
     },
     trackMouse: true, // Enable mouse swiping on all devices
     preventScrollOnSwipe: true,
+    touchEventOptions: { passive: false }, // Fix: allow preventDefault
   });
 
   const sortComments = (comments: HNComment[]): HNComment[] => {
@@ -180,6 +183,8 @@ export const PostDetail: React.FC = () => {
         py: isMobile ? 2 : 4,
         px: isMobile ? 1 : 2,
         position: 'relative',
+        overflowX: 'hidden', // Prevent horizontal scroll
+        touchAction: 'pan-y', // Prevent horizontal pan
       }}
       {...swipeHandlers} // Always attach swipe handlers
     >

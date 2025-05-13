@@ -9,6 +9,19 @@ body {
   background-color: #f4e4bc;
 }
 
+body,
+html {
+  overflow-x: hidden;
+  touch-action: pan-y;
+}
+
+#root,
+.App,
+.main-container {
+  overflow-x: hidden;
+  touch-action: pan-y;
+}
+
 a {
   text-decoration: none;
   color: inherit;
