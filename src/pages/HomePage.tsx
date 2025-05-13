@@ -138,6 +138,16 @@ export const HomePage: React.FC = () => {
     }
   }, [posts, shouldPreserveState, setShouldPreserveState]);
 
+  // Filter out duplicate posts by objectID
+  const uniquePosts = React.useMemo(() => {
+    const seen = new Set();
+    return posts.filter(post => {
+      if (seen.has(post.objectID)) return false;
+      seen.add(post.objectID);
+      return true;
+    });
+  }, [posts]);
+
   return (
     <Container maxWidth="md" sx={{ py: isMobile ? 2 : 4, px: isMobile ? 1 : 2 }}>
       <Stack
@@ -169,7 +179,7 @@ export const HomePage: React.FC = () => {
         </FormControl>
       </Stack>
 
-      {posts.map((post) => (
+      {uniquePosts.map((post) => (
         <PostCard
           key={post.objectID}
           post={post}
