@@ -41,12 +41,16 @@ export const CommentTree: React.FC<CommentTreeProps> = ({ comment, level = 0 }) 
         backgroundColor: level === 0 ? 'background.paper' : 'background.default'
       }}
     >
-      <Box key={`comment-header-${comment.objectID}`} sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
+      <Box
+        key={`comment-header-${comment.objectID}`}
+        sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5, cursor: comment.children && comment.children.length > 0 ? 'pointer' : 'default' }}
+        onClick={comment.children && comment.children.length > 0 ? toggleExpand : undefined}
+      >
         {comment.children && comment.children.length > 0 && (
           <IconButton
             key={`expand-button-${comment.objectID}`}
             size={isMobile ? "small" : "medium"}
-            onClick={toggleExpand}
+            onClick={e => { e.stopPropagation(); toggleExpand(); }}
             sx={{ p: isMobile ? 0.5 : 1 }}
           >
             {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
