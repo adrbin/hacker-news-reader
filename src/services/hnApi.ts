@@ -29,9 +29,20 @@ export interface HNComment {
 
 export const searchPosts = async (
   query: string = '',
-  timeRange: string = 'all',
+  timeRange: string = 'frontpage', // Set 'frontpage' as default
   page: number = 0
 ): Promise<{ hits: HNPost[]; nbPages: number }> => {
+  if (timeRange === 'frontpage') {
+    const response = await axios.get(`${ALGOLIA_API}/search`, {
+      params: {
+        query,
+        tags: 'front_page',
+        page,
+        hitsPerPage: 20,
+      },
+    });
+    return response.data;
+  }
   const timeFilter = getTimeFilter(timeRange);
   const response = await axios.get(`${ALGOLIA_API}/search`, {
     params: {
@@ -62,6 +73,7 @@ export const countReplies = (comment: HNComment): number => {
 };
 
 const getTimeFilter = (timeRange: string): string => {
+  // 'frontpage' handled in searchPosts, so skip here
   const now = Math.floor(Date.now() / 1000);
   const day = 24 * 60 * 60;
 

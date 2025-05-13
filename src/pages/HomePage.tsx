@@ -17,6 +17,7 @@ import { usePostsContext } from '../hooks/usePostsContext';
 import { debounce } from '@mui/material/utils';
 
 const timeRanges = [
+  { value: 'frontpage', label: 'Front Page' },
   { value: 'day', label: 'Past 24 Hours' },
   { value: 'week', label: 'Past Week' },
   { value: 'month', label: 'Past Month' },
