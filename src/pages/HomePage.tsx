@@ -8,12 +8,11 @@ import {
 } from '@mui/material';
 import { PostCard } from '../components/PostCard';
 import { usePostsContext } from '../hooks/usePostsContext';
-import { debounce } from '@mui/material/utils';
 import { SearchAndFilterBar } from '../components/SearchAndFilterBar';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { useRestoreScroll } from '../hooks/useRestoreScroll';
 import { getUniquePosts } from '../utils/getUniquePosts';
-
+import { useDebouncedFetch } from '../hooks/useDebouncedFetch';
 
 export const HomePage: React.FC = () => {
   const {
@@ -55,18 +54,15 @@ export const HomePage: React.FC = () => {
     }
   }, [fetchPosts, isLoading]);
 
-  const debouncedFetchRef = useRef<ReturnType<typeof debounce> | null>(null);
-
-  useEffect(() => {
-    debouncedFetchRef.current = debounce(() => {
+  // Use the new debounced fetch hook
+  useDebouncedFetch(
+    () => {
       setPage(0);
       searchParamsRef.current.page = 0;
       performFetch(true);
-    }, 300);
-    return () => {
-      debouncedFetchRef.current?.clear();
-    };
-  }, [performFetch]);
+    },
+    [searchQuery, timeRange]
+  );
 
   // Initial load: only fetch if not preserving state and posts are empty
   useEffect(() => {
@@ -85,7 +81,7 @@ export const HomePage: React.FC = () => {
     };
     setPage(0);
     searchParamsRef.current.page = 0;
-    debouncedFetchRef.current?.();
+    // debouncedFetchRef removed, handled by useDebouncedFetch
   }, [searchQuery, timeRange]);
 
   // Infinite scroll
