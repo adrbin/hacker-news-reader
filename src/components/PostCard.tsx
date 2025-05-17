@@ -1,11 +1,12 @@
 import React from 'react';
-import { Card, CardContent, Typography, Box, Chip, Divider, useTheme, useMediaQuery } from '@mui/material';
-import { formatDistanceToNow } from 'date-fns';
+import { Card, CardContent, Typography, Box, Divider, useTheme, useMediaQuery } from '@mui/material';
 import type { HNPost } from '../services/hnApi';
 import { useNavigate } from 'react-router-dom';
 import { SafeHtml } from './SafeHtml';
-import { countReplies } from '../services/hnApi';
 import { usePostsContext } from '../hooks/usePostsContext';
+import { PostMeta } from './PostMeta';
+import { PostHeader } from './PostHeader';
+import { countReplies } from '../utils/comments';
 
 interface PostCardProps {
   post: HNPost;
@@ -46,53 +47,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
       onClick={handleClick}
     >
       <CardContent sx={{ p: isMobile ? 1.5 : 2 }}>
-        <Typography
-          variant={isMobile ? "subtitle1" : "h6"}
-          component="div"
-          gutterBottom
-          sx={{
-            fontSize: isMobile ? '1.1rem' : '1.25rem',
-            lineHeight: 1.3
-          }}
-        >
-          {post.title}
-        </Typography>
-        <Box sx={{
-          display: 'flex',
-          gap: 0.5,
-          mb: 1,
-          flexWrap: 'wrap',
-          '& .MuiChip-root': {
-            height: isMobile ? 24 : 32,
-            fontSize: isMobile ? '0.75rem' : '0.875rem'
-          }
-        }}>
-          <Chip
-            size="small"
-            label={`${post.points} points`}
-            color="primary"
-            variant="outlined"
-          />
-          <Chip
-            size="small"
-            label={`${post.num_comments} comments`}
-            color="secondary"
-            variant="outlined"
-          />
-          <Chip
-            size="small"
-            label={formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-            variant="outlined"
-          />
-        </Box>
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          gutterBottom
-          sx={{ fontSize: isMobile ? '0.875rem' : '1rem' }}
-        >
-          by {post.author}
-        </Typography>
+        <PostHeader post={post} />
+        <PostMeta post={post} />
         {topComment && (
           <>
             <Divider sx={{ my: 1 }} />
