@@ -36,9 +36,11 @@ export const CommentTree: React.FC<CommentTreeProps> = ({ comment, level = 0 }) 
       elevation={1}
       sx={{
         mb: 1,
-        ml: isMobile ? level : level * 2,
+        ml: 0,
         p: isMobile ? 1 : 1.5,
-        backgroundColor: level === 0 ? 'background.paper' : 'background.default'
+        backgroundColor: level === 0 ? 'background.paper' : 'background.default',
+        minWidth: isMobile ? '0' : '220px',
+        minInlineSize: isMobile ? '90vw' : '220px'
       }}
     >
       <Box
