@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo, useLayoutEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import { useTheme, useMediaQuery, Slide, Container, Button, Box } from '@mui/material';
+import { useTheme, useMediaQuery, Slide, Container, Button, Box, Fab } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { usePostsContext } from '../hooks/usePostsContext';
 import type { SortOption } from '../utils/comments';
@@ -155,6 +155,21 @@ export const PostDetail: React.FC = () => {
           />
         </div>
       </Slide>
+      {/* Floating Action Button for Back to Home */}
+      <Fab
+        color="primary"
+        aria-label="back to home"
+        onClick={handleNavigateHome}
+        sx={{
+          position: 'fixed',
+          bottom: 24,
+          left: 24,
+          zIndex: 2100,
+          boxShadow: 6,
+        }}
+      >
+        <ArrowBackIcon />
+      </Fab>
     </Container>
   );
 };
