@@ -10,7 +10,7 @@ import { LoadingIndicator } from '../components/LoadingIndicator';
 import { NotFound } from '../components/NotFound';
 import { PostContent } from '../components/PostContent';
 import { usePostData } from '../hooks/usePostData';
-import { useSwipeNavigation } from '../hooks/useSwipeNavigation';
+import { useSwipeInfinitePostNavigation } from '../hooks/useSwipeInfinitePostNavigation';
 
 export const PostDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -19,12 +19,11 @@ export const PostDetail: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [sortBy, setSortBy] = useState<SortOption>('mostReplies');
-  const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null);
 
   const {
     posts,
     comments,
-    setShouldPreserveState
+    setShouldPreserveState,
   } = usePostsContext();
 
   const currentPostIndex = useMemo(() =>
@@ -32,25 +31,11 @@ export const PostDetail: React.FC = () => {
     [posts, id]
   );
 
-  const hasNextPost = currentPostIndex < posts.length - 1;
   const hasPrevPost = currentPostIndex > 0;
   const currentComments = comments[id || ''] as HNComment[] || [];
 
-  const navigateToPost = useCallback((direction: 'next' | 'prev') => {
-    if (direction === 'next' && hasNextPost) {
-      const nextPost = posts[currentPostIndex + 1];
-      setSlideDirection('left');
-      navigate(`/post/${nextPost.objectID}`, {
-        state: { post: nextPost }
-      });
-    } else if (direction === 'prev' && hasPrevPost) {
-      const prevPost = posts[currentPostIndex - 1];
-      setSlideDirection('right');
-      navigate(`/post/${prevPost.objectID}`, {
-        state: { post: prevPost }
-      });
-    }
-  }, [hasNextPost, hasPrevPost, posts, currentPostIndex, navigate]);
+  // Use the new custom hook for swipe navigation and infinite loading
+  const { swipeHandlers, loadingMore, navigateToPost } = useSwipeInfinitePostNavigation(id);
 
   const handleNavigateHome = useCallback(() => {
     setShouldPreserveState(true);
@@ -62,15 +47,7 @@ export const PostDetail: React.FC = () => {
 
   useLayoutEffect(() => {
     window.scrollTo(0, 0);
-    return () => {
-      setSlideDirection(null);
-    };
   }, [id]);
-
-  // Use custom hook for swipe navigation
-  const swipeHandlers = useSwipeNavigation({
-    navigateToPost
-  }) || {};
 
   // Overlay event handler to prevent Safari edge swipe navigation
   const preventSafariEdgeSwipe = (e: React.TouchEvent) => {
@@ -78,7 +55,7 @@ export const PostDetail: React.FC = () => {
     e.preventDefault();
   };
 
-  if (loading) return <LoadingIndicator />;
+  if (loading || loadingMore) return <LoadingIndicator />;
   if (!post) return <NotFound />;
 
   return (
@@ -139,12 +116,12 @@ export const PostDetail: React.FC = () => {
       {!isMobile && (
         <PostNavigationButtons
           hasPrevPost={hasPrevPost}
-          hasNextPost={hasNextPost}
+          hasNextPost={currentPostIndex < posts.length - 1}
           onPrev={() => navigateToPost('prev')}
           onNext={() => navigateToPost('next')}
         />
       )}
-      <Slide direction={slideDirection || 'left'} in={true} mountOnEnter unmountOnExit>
+      <Slide direction={'left'} in={true} mountOnEnter unmountOnExit>
         <div>
           <PostContent
             post={post}
