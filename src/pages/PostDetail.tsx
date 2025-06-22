@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useMemo, useLayoutEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-import { useTheme, useMediaQuery, Slide, Container, Button } from '@mui/material';
+import { useTheme, useMediaQuery, Slide, Container, Button, Box } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { usePostsContext } from '../hooks/usePostsContext';
 import type { SortOption } from '../utils/comments';
@@ -72,6 +72,12 @@ export const PostDetail: React.FC = () => {
     navigateToPost
   }) || {};
 
+  // Overlay event handler to prevent Safari edge swipe navigation
+  const preventSafariEdgeSwipe = (e: React.TouchEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+  };
+
   if (loading) return <LoadingIndicator />;
   if (!post) return <NotFound />;
 
@@ -87,6 +93,41 @@ export const PostDetail: React.FC = () => {
       }}
       {...swipeHandlers}
     >
+      {/* Edge overlays for mobile Safari to block browser swipe navigation */}
+      {isMobile && (
+        <>
+          <Box
+            sx={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '16px',
+              height: '100vh',
+              zIndex: 2000,
+              touchAction: 'none',
+              background: 'transparent',
+            }}
+            onTouchStart={preventSafariEdgeSwipe}
+            onTouchMove={preventSafariEdgeSwipe}
+            onTouchEnd={preventSafariEdgeSwipe}
+          />
+          <Box
+            sx={{
+              position: 'fixed',
+              top: 0,
+              right: 0,
+              width: '16px',
+              height: '100vh',
+              zIndex: 2000,
+              touchAction: 'none',
+              background: 'transparent',
+            }}
+            onTouchStart={preventSafariEdgeSwipe}
+            onTouchMove={preventSafariEdgeSwipe}
+            onTouchEnd={preventSafariEdgeSwipe}
+          />
+        </>
+      )}
       <Button
         startIcon={<ArrowBackIcon />}
         onClick={handleNavigateHome}
