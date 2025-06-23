@@ -39,8 +39,10 @@ export const CommentTree: React.FC<CommentTreeProps> = ({ comment, level = 0 }) 
         ml: 0,
         p: isMobile ? 1 : 1.5,
         backgroundColor: level === 0 ? 'background.paper' : 'background.default',
-        minWidth: isMobile ? '0' : '220px',
-        minInlineSize: isMobile ? '90vw' : '220px'
+        minWidth: 0,
+        width: '100%',
+        maxWidth: '100%',
+        boxSizing: 'border-box',
       }}
     >
       <Box
