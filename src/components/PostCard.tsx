@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, Typography, Box, Divider, useTheme, useMediaQuery } from '@mui/material';
+import { Card, CardContent, Typography, Box, Divider, Skeleton, useTheme, useMediaQuery } from '@mui/material';
 import type { HNPost } from '../services/hnApi';
 import { useNavigate } from 'react-router-dom';
 import { SafeHtml } from './SafeHtml';
@@ -31,8 +31,10 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
     return text.slice(0, maxLength) + '...';
   };
 
-  const topComment = comments[post.objectID]?.length > 0
-    ? [...comments[post.objectID]].sort((a, b) => countReplies(b) - countReplies(a))[0]
+  const commentsForPost = comments[post.objectID];
+  const isCommentsLoading = commentsForPost === undefined;
+  const topComment = commentsForPost?.length > 0
+    ? [...commentsForPost].sort((a, b) => countReplies(b) - countReplies(a))[0]
     : null;
 
   return (
@@ -49,6 +51,16 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
       <CardContent sx={{ p: isMobile ? 1.5 : 2 }}>
         <PostHeader post={post} />
         <PostMeta post={post} />
+        {isCommentsLoading && (
+          <>
+            <Divider sx={{ my: 1 }} />
+            <Box>
+              <Skeleton variant="text" height={20} width="40%" />
+              <Skeleton variant="text" height={18} width="90%" />
+              <Skeleton variant="text" height={18} width="85%" />
+            </Box>
+          </>
+        )}
         {topComment && (
           <>
             <Divider sx={{ my: 1 }} />
