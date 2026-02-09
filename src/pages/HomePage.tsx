@@ -5,6 +5,9 @@ import {
   CircularProgress,
   Alert,
   Collapse,
+  Card,
+  CardContent,
+  Skeleton,
   useTheme,
   useMediaQuery
 } from '@mui/material';
@@ -127,8 +130,17 @@ export const HomePage: React.FC = () => {
         )}
       </Collapse>
       {isLoading && uniquePosts.length === 0 ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', my: 6 }}>
-          <CircularProgress />
+        <Box>
+          {Array.from({ length: 6 }).map((_, index) => (
+            <Card key={`skeleton-${index}`} sx={{ mb: 2 }}>
+              <CardContent sx={{ p: isMobile ? 1.5 : 2 }}>
+                <Skeleton variant="text" height={32} width="80%" />
+                <Skeleton variant="text" height={20} width="60%" />
+                <Skeleton variant="text" height={20} width="40%" />
+                <Skeleton variant="rectangular" height={64} sx={{ mt: 1 }} />
+              </CardContent>
+            </Card>
+          ))}
         </Box>
       ) : (
         <>
