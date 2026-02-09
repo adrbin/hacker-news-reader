@@ -9,12 +9,14 @@ export const PostsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const [comments, setComments] = useState<Record<string, HNComment[]>>({});
     const [shouldPreserveState, setShouldPreserveState] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [timeRange, setTimeRange] = useState('frontpage');
 
     const fetchPosts = useCallback(async (query: string, timeRange: string, page: number, reset: boolean = false) => {
         if (isLoading) return;
         setIsLoading(true);
+        setError(null);
 
         try {
             const response = await searchPosts(query, timeRange, page);
@@ -41,6 +43,7 @@ export const PostsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
             return { hasMore: page < response.nbPages - 1 };
         } catch (error) {
             console.error('Error fetching posts:', error);
+            setError('Failed to load posts. Please try again.');
             return { hasMore: false };
         } finally {
             setIsLoading(false);
@@ -58,6 +61,7 @@ export const PostsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                 setShouldPreserveState,
                 fetchPosts,
                 isLoading,
+                error,
                 searchQuery,
                 setSearchQuery,
                 timeRange,

@@ -10,6 +10,7 @@ export interface PostsContextType {
     setShouldPreserveState: (value: boolean) => void;
     fetchPosts: (query: string, timeRange: string, page: number, reset?: boolean) => Promise<{ hasMore: boolean } | undefined>;
     isLoading: boolean;
+    error: string | null;
     searchQuery: string;
     setSearchQuery: (query: string) => void;
     timeRange: string;

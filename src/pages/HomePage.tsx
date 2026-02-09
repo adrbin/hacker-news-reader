@@ -3,6 +3,8 @@ import {
   Container,
   Box,
   CircularProgress,
+  Alert,
+  Collapse,
   useTheme,
   useMediaQuery
 } from '@mui/material';
@@ -17,9 +19,11 @@ import { useDebouncedFetch } from '../hooks/useDebouncedFetch';
 export const HomePage: React.FC = () => {
   const {
     posts,
+    setPosts,
     shouldPreserveState,
     fetchPosts,
     isLoading,
+    error,
     searchQuery,
     setSearchQuery,
     timeRange,
@@ -57,6 +61,7 @@ export const HomePage: React.FC = () => {
   // Use the new debounced fetch hook
   useDebouncedFetch(
     () => {
+      setPosts([]);
       setPage(0);
       searchParamsRef.current.page = 0;
       if (isLoading) {
@@ -114,13 +119,28 @@ export const HomePage: React.FC = () => {
         setTimeRange={setTimeRange}
         isMobile={isMobile}
       />
-      {uniquePosts.map((post) => (
-        <PostCard key={post.objectID} post={post} />
-      ))}
-      {isLoading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+      <Collapse in={Boolean(error)}>
+        {error && (
+          <Box sx={{ mb: 2 }}>
+            <Alert severity="error">{error}</Alert>
+          </Box>
+        )}
+      </Collapse>
+      {isLoading && uniquePosts.length === 0 ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', my: 6 }}>
           <CircularProgress />
         </Box>
+      ) : (
+        <>
+          {uniquePosts.map((post) => (
+            <PostCard key={post.objectID} post={post} />
+          ))}
+          {isLoading && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+              <CircularProgress />
+            </Box>
+          )}
+        </>
       )}
     </Container>
   );
