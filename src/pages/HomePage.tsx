@@ -31,25 +31,25 @@ export const HomePage: React.FC = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const pendingResetRef = useRef(false);
 
   // Keep search params in refs to avoid dependency issues
   const searchParamsRef = useRef({ query: searchQuery, timeRange, page });
 
   const performFetch = useCallback(async (reset: boolean = false) => {
-    if (!isLoading) {
-      const currentPage = reset ? 0 : searchParamsRef.current.page;
-      const result = await fetchPosts(
-        searchParamsRef.current.query,
-        searchParamsRef.current.timeRange,
-        currentPage,
-        reset
-      );
-      if (result) {
-        setHasMore(result.hasMore);
-        if (!reset) {
-          setPage(prev => prev + 1);
-          searchParamsRef.current.page = currentPage + 1;
-        }
+    if (isLoading) return;
+    const currentPage = reset ? 0 : searchParamsRef.current.page;
+    const result = await fetchPosts(
+      searchParamsRef.current.query,
+      searchParamsRef.current.timeRange,
+      currentPage,
+      reset
+    );
+    if (result) {
+      setHasMore(result.hasMore);
+      if (!reset) {
+        setPage(prev => prev + 1);
+        searchParamsRef.current.page = currentPage + 1;
       }
     }
   }, [fetchPosts, isLoading]);
@@ -59,6 +59,10 @@ export const HomePage: React.FC = () => {
     () => {
       setPage(0);
       searchParamsRef.current.page = 0;
+      if (isLoading) {
+        pendingResetRef.current = true;
+        return;
+      }
       performFetch(true);
     },
     [searchQuery, timeRange]
@@ -83,6 +87,14 @@ export const HomePage: React.FC = () => {
     searchParamsRef.current.page = 0;
     // debouncedFetchRef removed, handled by useDebouncedFetch
   }, [searchQuery, timeRange]);
+
+  // If a filter/search change happens mid-request, retry once loading finishes.
+  useEffect(() => {
+    if (!isLoading && pendingResetRef.current) {
+      pendingResetRef.current = false;
+      performFetch(true);
+    }
+  }, [isLoading, performFetch]);
 
   // Infinite scroll
   useInfiniteScroll({ hasMore, isLoading, performFetch });
