@@ -61,8 +61,8 @@ export function usePullToRefresh({
       }
     },
     trackMouse: false,
-    preventScrollOnSwipe: true,
-    touchEventOptions: { passive: false },
+    preventScrollOnSwipe: false,
+    touchEventOptions: { passive: true },
   });
 
   return {
