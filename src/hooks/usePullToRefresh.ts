@@ -16,6 +16,15 @@ export function usePullToRefresh({
 }: UsePullToRefreshOptions) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
+  const topTolerance = 2;
+
+  const getScrollTop = () => {
+    const docScrollTop = document.documentElement?.scrollTop ?? 0;
+    const bodyScrollTop = document.body?.scrollTop ?? 0;
+    return Math.max(window.scrollY, docScrollTop, bodyScrollTop);
+  };
+
+  const isAtTop = () => getScrollTop() <= topTolerance;
 
   const triggerRefresh = useCallback(async () => {
     setIsRefreshing(true);
@@ -33,7 +42,7 @@ export function usePullToRefresh({
         setPullDistance(0);
         return;
       }
-      if (window.scrollY !== 0 || eventData.dir !== 'Down') {
+      if (!isAtTop() || eventData.dir !== 'Down') {
         setPullDistance(0);
         return;
       }
@@ -41,7 +50,7 @@ export function usePullToRefresh({
     },
     onSwipedDown: (eventData) => {
       if (!enabled) return;
-      if (window.scrollY !== 0) return;
+      if (!isAtTop()) return;
       if (eventData.deltaY < threshold) return;
       if (isLoading || isRefreshing) return;
       void triggerRefresh();
@@ -52,8 +61,8 @@ export function usePullToRefresh({
       }
     },
     trackMouse: false,
-    preventScrollOnSwipe: false,
-    touchEventOptions: { passive: true },
+    preventScrollOnSwipe: true,
+    touchEventOptions: { passive: false },
   });
 
   return {
