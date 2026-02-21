@@ -18,6 +18,7 @@ import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { useRestoreScroll } from '../hooks/useRestoreScroll';
 import { getUniquePosts } from '../utils/getUniquePosts';
 import { useDebouncedFetch } from '../hooks/useDebouncedFetch';
+import { usePullToRefresh } from '../hooks/usePullToRefresh';
 
 export const HomePage: React.FC = () => {
   const {
@@ -110,11 +111,20 @@ export const HomePage: React.FC = () => {
   // Scroll restoration
   useRestoreScroll(posts, shouldPreserveState, setShouldPreserveState);
 
+  const { handlers: pullToRefreshHandlers, isRefreshing: isPullRefreshing } = usePullToRefresh({
+    onRefresh: async () => {
+      setPage(0);
+      searchParamsRef.current.page = 0;
+      await performFetch(true);
+    },
+    isLoading,
+  });
+
   // Filter out duplicate posts by objectID
   const uniquePosts = React.useMemo(() => getUniquePosts(posts), [posts]);
 
   return (
-    <Container maxWidth="md" sx={{ py: isMobile ? 2 : 4, px: isMobile ? 1 : 2 }}>
+    <Container maxWidth="md" sx={{ py: isMobile ? 2 : 4, px: isMobile ? 1 : 2 }} {...pullToRefreshHandlers}>
       <SearchAndFilterBar
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -150,6 +160,11 @@ export const HomePage: React.FC = () => {
           {isLoading && (
             <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
               <CircularProgress />
+            </Box>
+          )}
+          {isPullRefreshing && !isLoading && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+              <CircularProgress size={24} />
             </Box>
           )}
         </>
