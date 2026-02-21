@@ -111,7 +111,12 @@ export const HomePage: React.FC = () => {
   // Scroll restoration
   useRestoreScroll(posts, shouldPreserveState, setShouldPreserveState);
 
-  const { handlers: pullToRefreshHandlers, isRefreshing: isPullRefreshing } = usePullToRefresh({
+  const {
+    handlers: pullToRefreshHandlers,
+    isRefreshing: isPullRefreshing,
+    pullDistance,
+    pullProgress,
+  } = usePullToRefresh({
     onRefresh: async () => {
       setPage(0);
       searchParamsRef.current.page = 0;
@@ -125,6 +130,22 @@ export const HomePage: React.FC = () => {
 
   return (
     <Container maxWidth="md" sx={{ py: isMobile ? 2 : 4, px: isMobile ? 1 : 2 }} {...pullToRefreshHandlers}>
+      <Box
+        sx={{
+          height: isPullRefreshing || pullDistance > 0 ? 40 : 0,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          transition: 'height 120ms ease',
+          overflow: 'hidden',
+        }}
+      >
+        <CircularProgress
+          size={24}
+          variant={isPullRefreshing ? 'indeterminate' : 'determinate'}
+          value={pullProgress * 100}
+        />
+      </Box>
       <SearchAndFilterBar
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
@@ -160,11 +181,6 @@ export const HomePage: React.FC = () => {
           {isLoading && (
             <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
               <CircularProgress />
-            </Box>
-          )}
-          {isPullRefreshing && !isLoading && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
-              <CircularProgress size={24} />
             </Box>
           )}
         </>
