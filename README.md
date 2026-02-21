@@ -27,14 +27,14 @@ A modern, fast, and responsive Hacker News reader built with TypeScript, React, 
 ### Prerequisites
 
 - Node.js (v18+ recommended)
-- npm (v9+ recommended)
+- pnpm (v10+ recommended)
 
 ### Installation
 
 ```bash
 git clone https://github.com/adrbin/hacker-news-reader.git
 cd hacker-news-reader
-npm install
+pnpm install
 ```
 
 ### Development
@@ -42,7 +42,7 @@ npm install
 Start the development server:
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 Open [http://localhost:5173](http://localhost:5173) in your browser.
@@ -50,19 +50,19 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 ### Build for Production
 
 ```bash
-npm run build
+pnpm build
 ```
 
 Preview the production build:
 
 ```bash
-npm run preview
+pnpm preview
 ```
 
 ### Linting
 
 ```bash
-npm run lint
+pnpm lint
 ```
 
 ## Project Structure

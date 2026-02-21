@@ -23,10 +23,10 @@
   - Sorting logic for comments is in `src/utils/comments.ts`.
 
 ## Developer Workflows
-- **Start dev server:** `npm run dev`
-- **Build for production:** `npm run build`
-- **Preview production build:** `npm run preview`
-- **Lint:** `npm run lint`
+- **Start dev server:** `pnpm dev`
+- **Build for production:** `pnpm build`
+- **Preview production build:** `pnpm preview`
+- **Lint:** `pnpm lint`
 - **No built-in test scripts** (add if needed).
 
 ## Project Conventions
