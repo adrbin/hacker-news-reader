@@ -22,6 +22,7 @@ export const PostHeader: React.FC<PostHeaderProps> = ({ post }) => {
                     href={post.url}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={(event) => event.stopPropagation()}
                     sx={{
                         display: 'block',
                         mb: 2,

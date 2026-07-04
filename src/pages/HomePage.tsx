@@ -17,13 +17,12 @@ import { SearchAndFilterBar } from '../components/SearchAndFilterBar';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 import { useRestoreScroll } from '../hooks/useRestoreScroll';
 import { getUniquePosts } from '../utils/getUniquePosts';
-import { useDebouncedFetch } from '../hooks/useDebouncedFetch';
+import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { usePullToRefresh } from '../hooks/usePullToRefresh';
 
 export const HomePage: React.FC = () => {
   const {
     posts,
-    setPosts,
     shouldPreserveState,
     fetchPosts,
     isLoading,
@@ -37,73 +36,52 @@ export const HomePage: React.FC = () => {
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const [page, setPage] = useState(0);
+  const shouldSkipInitialFetchRef = useRef(shouldPreserveState && posts.length > 0);
+  const loadSequenceRef = useRef(0);
+  const [page, setPage] = useState(() => shouldPreserveState ? Math.ceil(posts.length / 20) : 0);
   const [hasMore, setHasMore] = useState(true);
-  const pendingResetRef = useRef(false);
+  const debouncedSearchQuery = useDebouncedValue(searchQuery);
 
-  // Keep search params in refs to avoid dependency issues
-  const searchParamsRef = useRef({ query: searchQuery, timeRange, page });
+  const loadFirstPage = useCallback(async () => {
+    const loadSequence = loadSequenceRef.current + 1;
+    loadSequenceRef.current = loadSequence;
+    setPage(0);
+    setHasMore(true);
+    const result = await fetchPosts(debouncedSearchQuery, timeRange, 0, true);
+    if (loadSequence !== loadSequenceRef.current) {
+      return;
+    }
+    setHasMore(result.hasMore);
+    setPage(1);
+  }, [debouncedSearchQuery, fetchPosts, timeRange]);
 
   const performFetch = useCallback(async (reset: boolean = false) => {
-    if (isLoading) return;
-    const currentPage = reset ? 0 : searchParamsRef.current.page;
-    const result = await fetchPosts(
-      searchParamsRef.current.query,
-      searchParamsRef.current.timeRange,
-      currentPage,
-      reset
-    );
-    if (result) {
-      setHasMore(result.hasMore);
-      if (!reset) {
-        setPage(prev => prev + 1);
-        searchParamsRef.current.page = currentPage + 1;
-      }
+    if (reset) {
+      await loadFirstPage();
+      return;
     }
-  }, [fetchPosts, isLoading]);
-
-  // Use the new debounced fetch hook
-  useDebouncedFetch(
-    () => {
-      setPosts([]);
-      setPage(0);
-      searchParamsRef.current.page = 0;
-      if (isLoading) {
-        pendingResetRef.current = true;
-        return;
-      }
-      performFetch(true);
-    },
-    [searchQuery, timeRange]
-  );
-
-  // Initial load: only fetch if not preserving state and posts are empty
-  useEffect(() => {
-    if (!shouldPreserveState && posts.length === 0) {
-      performFetch(true);
+    if (isLoading || !hasMore) {
+      return;
     }
-  }, []); // eslint-disable-line
 
-  // Handle search/sort changes (always allow user to trigger fetch)
-  useEffect(() => {
-    searchParamsRef.current = {
-      ...searchParamsRef.current,
-      query: searchQuery,
-      timeRange,
-      page: 0
-    };
-    setPage(0);
-    searchParamsRef.current.page = 0;
-    // debouncedFetchRef removed, handled by useDebouncedFetch
-  }, [searchQuery, timeRange]);
-
-  // If a filter/search change happens mid-request, retry once loading finishes.
-  useEffect(() => {
-    if (!isLoading && pendingResetRef.current) {
-      pendingResetRef.current = false;
-      performFetch(true);
+    const currentPage = page;
+    const loadSequence = loadSequenceRef.current;
+    const result = await fetchPosts(debouncedSearchQuery, timeRange, currentPage, false);
+    if (loadSequence !== loadSequenceRef.current) {
+      return;
     }
-  }, [isLoading, performFetch]);
+    setHasMore(result.hasMore);
+    setPage(currentPage + 1);
+  }, [debouncedSearchQuery, fetchPosts, hasMore, isLoading, loadFirstPage, page, timeRange]);
+
+  useEffect(() => {
+    if (shouldSkipInitialFetchRef.current) {
+      shouldSkipInitialFetchRef.current = false;
+      return;
+    }
+
+    void loadFirstPage();
+  }, [loadFirstPage]);
 
   // Infinite scroll
   useInfiniteScroll({ hasMore, isLoading, performFetch });
@@ -118,8 +96,6 @@ export const HomePage: React.FC = () => {
     pullProgress,
   } = usePullToRefresh({
     onRefresh: async () => {
-      setPage(0);
-      searchParamsRef.current.page = 0;
       await performFetch(true);
     },
     isLoading,

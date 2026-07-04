@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useLayoutEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useLayoutEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useTheme, useMediaQuery, Slide, Container, Button, Box, Fab } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -23,6 +23,7 @@ export const PostDetail: React.FC = () => {
   const {
     posts,
     comments,
+    ensureComments,
     setShouldPreserveState,
   } = usePostsContext();
 
@@ -44,6 +45,12 @@ export const PostDetail: React.FC = () => {
 
   // Use custom hook for post data
   const { post, loading } = usePostData(id, location.state);
+
+  useEffect(() => {
+    if (id) {
+      void ensureComments(id);
+    }
+  }, [ensureComments, id]);
 
   useLayoutEffect(() => {
     window.scrollTo(0, 0);

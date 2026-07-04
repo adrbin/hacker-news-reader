@@ -27,6 +27,49 @@ export interface HNComment {
   children: HNComment[];
 }
 
+type RawHNPost = Partial<HNPost> & {
+  id?: string | number;
+  story_title?: string;
+  story_url?: string;
+  children?: RawHNComment[];
+};
+
+type RawHNComment = Partial<HNComment> & {
+  id?: string | number;
+  children?: RawHNComment[];
+};
+
+const fallbackDate = new Date(0).toISOString();
+
+const toNumber = (value: unknown): number => (
+  typeof value === 'number' && Number.isFinite(value) ? value : 0
+);
+
+const normalizeId = (value: unknown): string => (
+  value === undefined || value === null ? '' : String(value)
+);
+
+const normalizePost = (post: RawHNPost): HNPost => ({
+  objectID: normalizeId(post.objectID ?? post.id),
+  title: post.title || post.story_title || 'Untitled',
+  url: post.url || post.story_url || '',
+  points: toNumber(post.points),
+  author: post.author || 'unknown',
+  created_at: post.created_at || fallbackDate,
+  num_comments: toNumber(post.num_comments ?? post.children?.length),
+  text: post.text,
+  _highlightResult: post._highlightResult,
+});
+
+const normalizeComment = (comment: RawHNComment): HNComment => ({
+  objectID: normalizeId(comment.objectID ?? comment.id),
+  author: comment.author || 'unknown',
+  text: comment.text || '',
+  created_at: comment.created_at || fallbackDate,
+  points: toNumber(comment.points),
+  children: (comment.children || []).map(normalizeComment),
+});
+
 export const searchPosts = async (
   query: string = '',
   timeRange: string = 'frontpage', // Set 'frontpage' as default
@@ -41,7 +84,10 @@ export const searchPosts = async (
         hitsPerPage: 20,
       },
     });
-    return response.data;
+    return {
+      hits: (response.data.hits || []).map(normalizePost),
+      nbPages: toNumber(response.data.nbPages),
+    };
   }
   const timeFilter = getTimeFilter(timeRange);
   const response = await axios.get(`${ALGOLIA_API}/search`, {
@@ -53,17 +99,20 @@ export const searchPosts = async (
       hitsPerPage: 20,
     },
   });
-  return response.data;
+  return {
+    hits: (response.data.hits || []).map(normalizePost),
+    nbPages: toNumber(response.data.nbPages),
+  };
 };
 
 export const getPost = async (id: string): Promise<HNPost> => {
   const response = await axios.get(`${ALGOLIA_API}/items/${id}`);
-  return response.data;
+  return normalizePost(response.data);
 };
 
 export const getComments = async (id: string): Promise<HNComment[]> => {
   const response = await axios.get(`${ALGOLIA_API}/items/${id}`);
-  return response.data.children || [];
+  return (response.data.children || []).map(normalizeComment);
 };
 
 // Utility to count all descendants recursively

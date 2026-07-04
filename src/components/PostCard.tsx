@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, Typography, Box, Divider, Skeleton, useTheme, useMediaQuery } from '@mui/material';
 import type { HNPost } from '../services/hnApi';
 import { useNavigate } from 'react-router-dom';
@@ -13,10 +13,14 @@ interface PostCardProps {
 }
 
 export const PostCard: React.FC<PostCardProps> = ({ post }) => {
-  const { comments, setShouldPreserveState } = usePostsContext();
+  const { comments, ensureComments, setShouldPreserveState } = usePostsContext();
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  useEffect(() => {
+    void ensureComments(post.objectID);
+  }, [ensureComments, post.objectID]);
 
   const handleClick = () => {
     sessionStorage.setItem('hnScrollY', String(window.scrollY)); // Save scroll position before navigating

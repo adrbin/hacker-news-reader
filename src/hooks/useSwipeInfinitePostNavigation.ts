@@ -61,18 +61,15 @@ export function useSwipeInfinitePostNavigation(currentPostId: string | undefined
       if (result) {
         setHasMore(result.hasMore);
         setPage(nextPage + 1);
-        // If new posts loaded, try navigating again
-        setTimeout(() => {
-          const newIndex = posts.findIndex((p: HNPost) => p.objectID === currentPostId) + 1;
-          if (posts[newIndex]) {
-            navigate(`/post/${posts[newIndex].objectID}`, {
-              state: { post: posts[newIndex] }
-            });
-          }
-        }, 100);
+        const nextPost = result.posts[0];
+        if (nextPost) {
+          navigate(`/post/${nextPost.objectID}`, {
+            state: { post: nextPost }
+          });
+        }
       }
     }
-  }, [hasNextPost, hasPrevPost, posts, currentPostIndex, navigate, hasMore, loadingMore, fetchPosts, page, currentPostId]);
+  }, [hasNextPost, hasPrevPost, posts, currentPostIndex, navigate, hasMore, loadingMore, fetchPosts, page]);
 
   const swipeHandlers = useSwipeNavigation({ navigateToPost });
 
