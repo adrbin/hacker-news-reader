@@ -2,6 +2,8 @@
 
 A modern, fast, and responsive Hacker News reader built with TypeScript, React, Vite, and Material UI. Browse top stories, search posts, and read comments from Hacker News using the Algolia API. Includes PWA support for offline use and mobile-friendly experience.
 
+Try it at: https://hackernewsreader.netlify.app
+
 ## Features
 
 - Browse top, new, and best Hacker News stories
