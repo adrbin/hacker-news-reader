@@ -45,10 +45,13 @@ const theme = createTheme({
   },
 });
 
+const basename =
+  import.meta.env.BASE_URL.replace(/\/$/, '') || '/';
+
 function App() {
   return (
     <PostsProvider>
-      <Router>
+      <Router basename={basename}>
         <ThemeProvider theme={theme}>
           <CssBaseline />
           <Header />
